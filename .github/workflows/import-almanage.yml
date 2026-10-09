@@ -26,29 +26,59 @@ jobs:
           ref: main
           path: original
           persist-credentials: false
-      - name: Import files without source history
+      - name: Diagnose permissions and branch state
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          cd destination
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Actor: $GITHUB_ACTOR"
+          gh api "repos/$GITHUB_REPOSITORY" --jq '{default_branch,permissions}' || true
+          git -C destination status --short --branch
+          git -C destination remote -v
+          test -f original/app/src/main/AndroidManifest.xml
+      - name: Copy Android project
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -av --exclude='.git/' --exclude='.github/workflows/' --exclude='.gradle/' --exclude='build/' --exclude='app/build/' original/ destination/
+          test -f destination/app/src/main/AndroidManifest.xml
+          git -C destination status --short | head -100
+      - name: Commit migration source
+        shell: bash
+        working-directory: destination
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -c migration/import-almanage
-          # Keep destination automation and migration docs intact; import application source only.
-          rsync -a --exclude='.git/' --exclude='.github/workflows/' --exclude='.gradle/' --exclude='build/' --exclude='app/build/' ../original/ ./
-          echo 'Imported source top-level files:'
-          ls -la
-          test -f app/src/main/AndroidManifest.xml || { echo 'ERROR: Android manifest missing after import'; exit 1; }
           git add -A
           if git diff --cached --quiet; then
-            echo "No files changed"; exit 1
+            echo "No source changes found"; exit 1
           fi
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore: import Almanage Android source'
-          echo 'Pushing migration branch...'
-          git push -u origin migration/import-almanage || { echo 'ERROR: push failed. Check Actions workflow permissions: Read and write permissions.'; exit 1; }
+          git commit -m 'chore: import Almanage Android source'
+      - name: Push migration branch
+        working-directory: destination
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git push --porcelain --set-upstream origin HEAD:refs/heads/migration/import-almanage || {
+            echo 'ERROR: push rejected. Check Settings > Actions > General > Workflow permissions (Read and write).'
+            echo 'Also check branch rules and whether migration/import-almanage already exists.'
+            exit 1
+          }
       - name: Open migration pull request
         env:
           GH_TOKEN: ${{ github.token }}
         working-directory: destination
         run: |
+          set -euo pipefail
           gh pr create --base main --head migration/import-almanage \
-            --title "Import existing Almanage Android application" \
-            --body "Imports the original Android project for review. Verify Gradle builds, tests, permissions and workflows before merging. The original repository is unchanged."
+            --title 'Import existing Almanage Android application' \
+            --body 'Import Android source for verification. Original repository unchanged. Do not merge until build and tests pass.' || {
+            echo 'ERROR: PR creation rejected. Check Actions > General > Allow GitHub Actions to create and approve pull requests.'
+            exit 1
+          }
