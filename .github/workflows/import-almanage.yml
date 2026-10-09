@@ -1,0 +1,45 @@
+name: Import Almanage source
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination
+        uses: actions/checkout@v4
+        with:
+          path: destination
+          persist-credentials: true
+      - name: Checkout original application
+        uses: actions/checkout@v4
+        with:
+          repository: mohd012z/aimanage
+          ref: main
+          path: original
+          persist-credentials: false
+      - name: Import files without source history
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd destination
+          git switch -c migration/import-almanage
+          rsync -a --exclude='.git/' --exclude='.gradle/' --exclude='build/' --exclude='app/build/' ../original/ ./
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No files changed"; exit 1
+          fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore: import Almanage Android source'
+          git push -u origin migration/import-almanage
+      - name: Open migration pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: destination
+        run: |
+          gh pr create --base main --head migration/import-almanage \
+            --title "Import existing Almanage Android application" \
+            --body "Imports the original Android project for review. Verify Gradle builds, tests, permissions and workflows before merging. The original repository is unchanged."
