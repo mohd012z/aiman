@@ -1,6 +1,10 @@
 name: Import Almanage source
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-almanage.yml'
 
 permissions:
   contents: write
