@@ -32,13 +32,18 @@ jobs:
           set -euo pipefail
           cd destination
           git switch -c migration/import-almanage
-          rsync -a --exclude='.git/' --exclude='.gradle/' --exclude='build/' --exclude='app/build/' ../original/ ./
+          # Keep destination automation and migration docs intact; import application source only.
+          rsync -a --exclude='.git/' --exclude='.github/workflows/' --exclude='.gradle/' --exclude='build/' --exclude='app/build/' ../original/ ./
+          echo 'Imported source top-level files:'
+          ls -la
+          test -f app/src/main/AndroidManifest.xml || { echo 'ERROR: Android manifest missing after import'; exit 1; }
           git add -A
           if git diff --cached --quiet; then
             echo "No files changed"; exit 1
           fi
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore: import Almanage Android source'
-          git push -u origin migration/import-almanage
+          echo 'Pushing migration branch...'
+          git push -u origin migration/import-almanage || { echo 'ERROR: push failed. Check Actions workflow permissions: Read and write permissions.'; exit 1; }
       - name: Open migration pull request
         env:
           GH_TOKEN: ${{ github.token }}
