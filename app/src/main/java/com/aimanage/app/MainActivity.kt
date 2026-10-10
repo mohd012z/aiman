@@ -209,6 +209,22 @@ private fun AimanageUI() {
   else -> "System information and Android settings."
  }
  PanelCard(section,description,Icons.Default.SettingsSuggest) {
+  if(section == "Permissions") {
+   val ctx=LocalContext.current
+   var grants by remember { mutableStateOf(PermissionAudit.capture(ctx)) }
+   Text("Review permissions used by Aiman. Nothing is granted automatically.",color=Muted)
+   grants.forEach { entry ->
+    Text(entry.title + ": " + if(entry.granted) "Granted" else "Not granted",color=if(entry.granted) Cyan else Muted)
+    Text(entry.detail,style=MaterialTheme.typography.bodySmall,color=Muted)
+   }
+   Action("Refresh permission status") { grants=PermissionAudit.capture(ctx) }
+   Action("Open Aiman app permissions") {
+    val intent=Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+ctx.packageName))
+    ctx.startActivity(intent)
+   }
+   Action("Notification access settings") { open(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS) }
+   Action("Usage access settings") { open(Settings.ACTION_USAGE_ACCESS_SETTINGS) }
+  }
   if(section == "Cleaner & Files") {
    val ctx=LocalContext.current
    var cacheSize by remember { mutableStateOf(SafeStorageTools.cacheBytes(ctx)) }
