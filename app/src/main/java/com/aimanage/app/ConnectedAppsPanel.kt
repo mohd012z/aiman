@@ -13,6 +13,9 @@ fun ConnectedAppsPanel(context: Context) {
         mutableStateOf(context.getSharedPreferences("connected_apps",Context.MODE_PRIVATE)
             .getBoolean("outlook_voice",false))
     }
+    var recipient by remember { mutableStateOf("") }
+    var subject by remember { mutableStateOf("") }
+    var eventTitle by remember { mutableStateOf("") }
     Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
         Text("Microsoft Outlook",style=MaterialTheme.typography.titleLarge)
         Text("Open Outlook email or calendar. Full mailbox and calendar synchronization are not connected.")
@@ -22,6 +25,17 @@ fun ConnectedAppsPanel(context: Context) {
         OutlinedButton(onClick={ConnectedAppLinks.calendar(context)},modifier=Modifier.fillMaxWidth()) {
             Text("Open Outlook calendar")
         }
+        Text("Quick actions",style=MaterialTheme.typography.titleMedium)
+        OutlinedTextField(value=recipient,onValueChange={recipient=it},
+            label={Text("Email recipient (optional)")},singleLine=true,modifier=Modifier.fillMaxWidth())
+        OutlinedTextField(value=subject,onValueChange={subject=it},
+            label={Text("Email subject")},singleLine=true,modifier=Modifier.fillMaxWidth())
+        OutlinedButton(onClick={ConnectedAppLinks.composeEmail(context,recipient,subject)},
+            modifier=Modifier.fillMaxWidth()) { Text("Compose email in selected app") }
+        OutlinedTextField(value=eventTitle,onValueChange={eventTitle=it},
+            label={Text("Meeting or event title")},singleLine=true,modifier=Modifier.fillMaxWidth())
+        OutlinedButton(onClick={ConnectedAppLinks.createCalendarEvent(context,eventTitle)},
+            modifier=Modifier.fillMaxWidth()) { Text("Create calendar event in selected app") }
         Row(modifier=Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
             Text("Outlook voice notifications")
             Switch(emailVoice,{
