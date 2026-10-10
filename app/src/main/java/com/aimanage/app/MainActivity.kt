@@ -692,6 +692,13 @@ private fun AimanageUI() {
   }
   if(section == "Firewall") {
    Text("Firewall readiness",color=Cyan,fontWeight=FontWeight.Bold)
+   val ctx=LocalContext.current
+   var readiness by remember { mutableStateOf(FirewallReadinessPolicy.inspect(ctx)) }
+   Text("VPN consent: " + if(readiness.needsUserConsent) "Not authorized" else "Already authorized")
+   Text("Packet filtering: " + if(readiness.packetFilterImplemented) "Implemented" else "Not implemented")
+   readiness.notes.forEach { Text("• " + it,color=Muted) }
+   Action("Refresh firewall readiness") { readiness=FirewallReadinessPolicy.inspect(ctx) }
+
    Text("A local Android firewall requires VpnService, a user-approved VPN session, and a packet-filtering engine. AImanage does not yet intercept or block traffic.",color=Muted)
    Text("Only one active VPN service is generally supported at a time. A firewall VPN can conflict with another VPN app.",color=Muted)
    Action("Review Android VPN permissions") { open(Settings.ACTION_VPN_SETTINGS) }
