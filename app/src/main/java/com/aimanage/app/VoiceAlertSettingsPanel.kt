@@ -62,6 +62,20 @@ fun VoiceAlertSettingsPanel(context: Context) {
             Text("Privacy mode")
             Switch(options.privateMode,{save(options.copy(privateMode=it))})
         }
+        Text("Individual voice volumes",style=MaterialTheme.typography.titleMedium)
+        AlertChannel.entries.forEach { channel ->
+            var gain by remember(channel) { mutableFloatStateOf(AlertVolumeSettings.volume(context,channel)) }
+            Column {
+                Row(modifier=Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                    Text(channel.name.lowercase().replaceFirstChar { it.uppercase() })
+                    Text("${(gain*100).toInt()}%")
+                }
+                Slider(value=gain,onValueChange={ gain=it },
+                    onValueChangeFinished={ AlertVolumeSettings.save(context,channel,gain) },
+                    valueRange=0f..1f,enabled=options.enabled)
+            }
+        }
+        Text("These sliders control Aiman speech gain, not other apps' notification sounds or the system volume.")
         Text("Message bodies are never spoken while the device is locked. Turn off Privacy Mode and enable content explicitly to read a notification body.")
         OutlinedButton(onClick={
             context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
