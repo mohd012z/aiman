@@ -11,6 +11,7 @@ data class AppReviewFlags(
 )
 object AppReviewNotes {
  private const val PREFS="aimanage_app_review_flags"
+ private const val MAX_PACKAGES=250
  fun load(context:Context,packageName:String):AppReviewFlags {
   if(!AppPackageIdPolicy.valid(packageName)) return AppReviewFlags()
   val p=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE)
@@ -25,7 +26,10 @@ object AppReviewNotes {
  fun save(context:Context,packageName:String,flags:AppReviewFlags):Boolean {
   if(!AppPackageIdPolicy.valid(packageName)) return false
   val prefix=packageName.trim()+":"
-  return context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).edit()
+  val prefs=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE)
+  val distinct=prefs.all.keys.map { it.substringBefore(":") }.toSet()
+  if(packageName.trim() !in distinct && distinct.size>=MAX_PACKAGES) return false
+  return prefs.edit()
    .putBoolean(prefix+"essential",flags.essential)
    .putBoolean(prefix+"alerts",flags.unwantedNotifications)
    .putBoolean(prefix+"battery",flags.unusualBatteryUse)
