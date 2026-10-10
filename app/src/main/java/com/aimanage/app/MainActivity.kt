@@ -746,6 +746,23 @@ private fun AimanageUI() {
    Action("Open VPN settings") { open(Settings.ACTION_VPN_SETTINGS) }
   }
   if(section == "Thermal" || section == "CPU & Thermal") Text("Current thermal status: $thermal")
+  if(section == "Battery Care") {
+   val ctx=LocalContext.current
+   var refresh by remember { mutableIntStateOf(0) }
+   val battery=remember(refresh) { DeviceReadings.battery(ctx) }
+   val reading=remember(refresh) { ctx.registerReceiver(null,IntentFilter(Intent.ACTION_BATTERY_CHANGED)) }
+   val rawLevel=reading?.getIntExtra(BatteryManager.EXTRA_LEVEL,-1) ?: -1
+   val rawScale=reading?.getIntExtra(BatteryManager.EXTRA_SCALE,100) ?: 100
+   val percent=BatteryPercentagePolicy.fromLevelAndScale(rawLevel,rawScale)
+   val advice=BatteryCarePolicy.evaluate(percent,battery.temperatureC,battery.charging)
+   Text("Battery care assessment: "+advice.priority,color=Cyan,fontWeight=FontWeight.Bold)
+   Text("Charge level: "+(percent?.let { "$it%" } ?: "Unavailable"))
+   Text("Temperature: "+(battery.temperatureC?.let { "%.1f °C".format(it) } ?: "Unavailable"))
+   Text("Charging: "+if(battery.charging) "Yes" else "No")
+   advice.messages.forEach { Text("• "+it,color=Muted) }
+   Action("Refresh battery care") { refresh++ }
+   Action("Open Android battery settings") { open(Settings.ACTION_BATTERY_SAVER_SETTINGS) }
+  }
   if(section == "Settings") {
    val ctx=LocalContext.current
    val prefs=remember { ctx.getSharedPreferences("aimanage_ui_options",Context.MODE_PRIVATE) }
