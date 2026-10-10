@@ -391,6 +391,21 @@ private fun AimanageUI() {
   if(section == "App Review" || section == "App Management") {
    val context=LocalContext.current
    var packageName by remember { mutableStateOf("") }
+   var appFilter by remember { mutableStateOf("") }
+   var showAppChooser by remember { mutableStateOf(false) }
+   val launchableApps=remember { ReviewableApps.load(context) }
+   OutlinedTextField(value=appFilter,onValueChange={appFilter=it},label={Text("Search installed launchable apps")},singleLine=true)
+   Action(if(showAppChooser) "Hide app choices" else "Choose an app") { showAppChooser=!showAppChooser }
+   if(showAppChooser) {
+    val matches=launchableApps.filter { it.label.contains(appFilter,true) || it.packageName.contains(appFilter,true) }.take(20)
+    Text("Showing ${matches.size} matches (first 20); Android may hide non-launchable apps.",color=Muted)
+    matches.forEach { app ->
+     TextButton(onClick={packageName=app.packageName;showAppChooser=false}) {
+      Text(app.label+" ("+app.packageName+")",color=Cyan)
+     }
+    }
+   }
+
    var unneeded by remember { mutableStateOf(false) }
    var unwantedAlerts by remember { mutableStateOf(false) }
    var batteryEvidence by remember { mutableStateOf(false) }
