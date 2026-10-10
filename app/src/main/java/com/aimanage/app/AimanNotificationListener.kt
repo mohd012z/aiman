@@ -38,7 +38,7 @@ class AimanNotificationListener : NotificationListenerService() {
             else settings.copy(allowContent=false)
         val text=VoiceContentPolicy.compose(app,sender,content,effective) ?: return
         lastSpoken[sbn.packageName]=now
-        voice?.speak(text)
+        voice?.speak(text, AlertVolumeSettings.forPackage(sbn.packageName))
     }
     override fun onListenerDisconnected() {
         voice?.shutdown()
