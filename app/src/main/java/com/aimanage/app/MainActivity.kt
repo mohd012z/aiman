@@ -34,7 +34,7 @@ private val Cyan = Color(0xFF00B8D9)
 private val Panel = Color(0xFF192640)
 private val Muted = Color(0xFFA9B8CE)
 private val tabs = listOf("Home","Apps","Network","Protect","AI")
-private val sections = listOf("Overview","Cleaner & Files","Performance","RAM","App Management","App Review","Sleep Review","Background & Autostart","CPU & Thermal","Battery","Battery Care","Charging Intelligence","Brightness & Power","AI Assistant","AI Learning","Security Intelligence","Web Scam Check","Telegram Safety","Notification Center","Automation Control","CPU & App Activity","Caller Intelligence","Voice Caller","Standby Intelligence","Display & Refresh Rate","Network & Speed","Ad Blocker","Firewall","VPN","Permissions","Device Information","Settings")
+private val sections = listOf("Overview","Cleaner & Files","Performance","RAM","App Management","App Review","Sleep Review","Background & Autostart","CPU & Thermal","Battery","Battery Care","Charging Intelligence","Brightness & Power","AI Assistant","AI Learning","Security Intelligence","Web Scam Check","Telegram Safety","Notification Center","Connected Apps","Automation Control","CPU & App Activity","Caller Intelligence","Voice Caller","Standby Intelligence","Display & Refresh Rate","Network & Speed","Ad Blocker","Firewall","VPN","Permissions","Device Information","Settings")
 
 class MainActivity : ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); setContent { AimanageUI() } }
@@ -81,7 +81,9 @@ private fun AimanageUI() {
     }
     LazyColumn(Modifier.weight(1f).fillMaxHeight(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
      item { Text(selected,color=Color.White,style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) }
-     if(selected == "Voice Caller" || selected == "Notification Center") {
+     if(selected == "Connected Apps") {
+      item { ConnectedAppsPanel(context) }
+     } else if(selected == "Voice Caller" || selected == "Notification Center") {
       item { VoiceAlertSettingsPanel(context) }
      } else if(selected == "Overview" || selected == "Home") {
       item { PanelCard("Device Health", "Live battery and thermal snapshot", Icons.Default.Favorite) {
