@@ -23,14 +23,14 @@ object DeviceReadings {
   val voltage = i?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1) ?: -1
   val status = i?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
   val health = i?.getIntExtra(BatteryManager.EXTRA_HEALTH, -1) ?: -1
-  val current = manager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
-  val counter = manager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+  val current = runCatching { manager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) }.getOrNull()
+  val counter = runCatching { manager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) }.getOrNull()
   return BatterySnapshot(
    BatteryPercentagePolicy.fromLevelAndScale(level, scale),
    if(temp >= 0) temp / 10f else null,
    voltage.takeIf { it >= 0 },
-   current.takeIf { it != Int.MIN_VALUE }?.div(1000),
-   counter.takeIf { it != Int.MIN_VALUE }?.div(1000),
+   current?.takeIf { it != Int.MIN_VALUE }?.div(1000),
+   counter?.takeIf { it != Int.MIN_VALUE }?.div(1000),
    status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL,
    health.takeIf { it >= 0 }
   )
