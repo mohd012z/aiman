@@ -9,6 +9,7 @@
         <package android:name="ch.protonvpn.android" />
         <package android:name="com.cloudflare.onedotonedotonedotone" />
         <package android:name="com.windscribe.vpn" />
+        <package android:name="com.microsoft.office.outlook" />
     </queries>
 
     <application
