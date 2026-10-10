@@ -6,6 +6,10 @@
 
     <!-- Narrow package visibility solely for user-selected VPN provider handoff. -->
     <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
         <package android:name="ch.protonvpn.android" />
         <package android:name="com.cloudflare.onedotonedotonedotone" />
         <package android:name="com.windscribe.vpn" />
