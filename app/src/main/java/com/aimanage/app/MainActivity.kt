@@ -52,6 +52,7 @@ private fun AimanageUI() {
  var autoHideBottom by remember { mutableStateOf(uiPrefs.getBoolean("auto_hide_bottom_bar",true)) }
  var bottomVisible by remember { mutableStateOf(true) }
  val contentScroll = rememberLazyListState()
+ LaunchedEffect(selected) { contentScroll.scrollToItem(0) }
  LaunchedEffect(contentScroll,autoHideBottom,selected) {
   bottomVisible=true
   var previousIndex=contentScroll.firstVisibleItemIndex
@@ -410,7 +411,7 @@ private fun AimanageUI() {
    var unwantedAlerts by remember { mutableStateOf(false) }
    var batteryEvidence by remember { mutableStateOf(false) }
    var essential by remember { mutableStateOf(false) }
-   val valid=packageName.trim().matches(Regex("[A-Za-z0-9_]+(\\\\.[A-Za-z0-9_]+)+"))
+   val valid=packageName.trim().matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+"))
    Text("App review assistant",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
    Text("Enter an exact package ID from Android App Info. AImanage cannot identify live background services or measure another app's CPU load; it does not close apps automatically.",color=Muted)
    OutlinedTextField(value=packageName,onValueChange={packageName=it},label={Text("Package ID (example: com.example.app)")},modifier=Modifier.fillMaxWidth(),singleLine=true)
