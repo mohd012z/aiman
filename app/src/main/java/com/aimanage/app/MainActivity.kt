@@ -391,6 +391,20 @@ private fun AimanageUI() {
   }
   if(section == "App Review" || section == "App Management") {
    val context=LocalContext.current
+   var exportStatus by remember { mutableStateOf("") }
+   val exportReviews=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+    if(uri!=null) {
+     exportStatus=try {
+      val json=AppReviewExport.toJson(context)
+      context.contentResolver.openOutputStream(uri,"wt")?.use { stream ->
+       stream.write(json.toByteArray(Charsets.UTF_8))
+       stream.flush()
+      }?.let { "Saved app review export." } ?: "Export failed: destination unavailable."
+     } catch(e:Exception) { "Export failed: "+(e.message ?: "I/O error") }
+    } else exportStatus="Export cancelled."
+   }
+   Action("Export saved app reviews (JSON)") { exportReviews.launch("aimanage-app-reviews.json") }
+   if(exportStatus.isNotBlank()) Text(exportStatus,color=Muted)
    var packageName by remember { mutableStateOf("") }
    var appFilter by remember { mutableStateOf("") }
    var showAppChooser by remember { mutableStateOf(false) }
