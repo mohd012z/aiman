@@ -22,6 +22,8 @@ class AimanNotificationListener : NotificationListenerService() {
         if (sbn == null || sbn.packageName == packageName) return
         val settings=VoiceSettings.options(this)
         if (!settings.enabled) return
+        if (ConnectedAppLinks.outlookPackage(sbn.packageName) &&
+            !getSharedPreferences("connected_apps", MODE_PRIVATE).getBoolean("outlook_voice",false)) return
         val now=SystemClock.elapsedRealtime()
         val last=lastSpoken[sbn.packageName] ?: 0L
         if (now-last < 10_000L) return
