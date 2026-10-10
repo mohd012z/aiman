@@ -31,6 +31,11 @@ class VoiceAlertEngine(private val context: Context) : TextToSpeech.OnInitListen
         }
     }
 
+    fun speak(text: String) {
+        if (!enabled() || !ready || text.isBlank()) return
+        engine?.speak(text.take(280), TextToSpeech.QUEUE_FLUSH, null, "aiman-alert")
+    }
+
     fun announceCategory(category: String, appLabel: String) {
         if (!enabled() || !ready) return
         val allowed = setOf("device", "call", "message")
