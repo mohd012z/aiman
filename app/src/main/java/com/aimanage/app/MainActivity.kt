@@ -431,6 +431,22 @@ private fun AimanageUI() {
     Text("I no longer need this app",modifier=Modifier.weight(1f))
    }
    if(valid) {
+    var usageReading by remember(packageName) { mutableStateOf<AppUsageReading?>(null) }
+    Action("Check last 24 hours of app usage") {
+     usageReading=AppUsageDiagnostics.read(context,packageName.trim())
+    }
+    usageReading?.let { reading ->
+     if(!reading.permissionGranted) {
+      Text("Usage access is not granted. Enable it manually in Android settings.",color=Muted)
+      Action("Open usage access settings") {
+       context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+      }
+     } else {
+      Text("Foreground usage (historical): "+(reading.foregroundMillis?.let { "${it/60000L} min" } ?: "Unavailable"),color=Muted)
+      Text("Last used: "+(reading.lastUsedAtMillis?.let { java.text.DateFormat.getDateTimeInstance().format(java.util.Date(it)) } ?: "Unavailable"),color=Muted)
+      Text("This does not measure live CPU load, background services, or battery consumption.",color=Muted)
+     }
+    }
     val recommendation=AppReviewPolicy.recommend(unneeded,unwantedAlerts,batteryEvidence,essential)
     Text("Recommendation: ${recommendation.action.name.replace('_',' ')}",fontWeight=FontWeight.Bold,color=Cyan)
     Text(recommendation.explanation,color=Muted)
