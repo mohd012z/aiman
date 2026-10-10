@@ -727,7 +727,23 @@ private fun AimanageUI() {
    Action("Review battery settings") { open(Settings.ACTION_BATTERY_SAVER_SETTINGS) }
    Action("Manage Android notifications") { open(Settings.ACTION_APP_NOTIFICATION_SETTINGS) }
   }
-  if(section == "Device Information") { Text("Model: ${Build.MANUFACTURER} ${Build.MODEL}"); Text("Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})") }
+  if(section == "Device Information") {
+   val ctx=LocalContext.current
+   var details by remember { mutableStateOf(DetailedDeviceDiagnostics.capture(ctx)) }
+   Text("Manufacturer: ${details.manufacturer}")
+   Text("Model: ${details.model}")
+   Text("Product / device: ${details.product} / ${details.device}")
+   Text("Android: ${details.androidRelease} (API ${details.apiLevel})")
+   Text("Security patch: ${details.securityPatch}")
+   Text("Supported CPU ABIs: ${details.supportedAbis}")
+   Text("Available CPU cores: ${details.cpuCores}")
+   Text("RAM available / total: ${DetailedDeviceDiagnostics.gib(details.availableRamBytes)} / ${DetailedDeviceDiagnostics.gib(details.totalRamBytes)}")
+   Text("Internal storage available / total: ${DetailedDeviceDiagnostics.gib(details.storageAvailableBytes)} / ${DetailedDeviceDiagnostics.gib(details.storageTotalBytes)}")
+   Text("Power saver: ${if(details.powerSaver) "On" else "Off"}")
+   Text("Android thermal status code: ${details.thermalStatus?.toString() ?: "Unavailable"}")
+   Text("Device identifiers and restricted hardware details are intentionally not collected.",color=Muted)
+   Action("Refresh device information") { details=DetailedDeviceDiagnostics.capture(ctx) }
+  }
   Action("Open Android app settings") { open(Settings.ACTION_APPLICATION_SETTINGS) }
   Action("Open battery saver settings") { open(Settings.ACTION_BATTERY_SAVER_SETTINGS) }
   Action("Open system settings") { open(Settings.ACTION_SETTINGS) }
