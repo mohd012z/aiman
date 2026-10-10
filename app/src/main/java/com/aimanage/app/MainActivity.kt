@@ -299,6 +299,12 @@ private fun AimanageUI() {
    Text("Adaptive brightness: ${d.adaptiveBrightness?.toString() ?: "Unavailable"}")
    Text("Power saver: ${if(d.powerSaveEnabled) "On" else "Off"}")
    d.observations.forEach { Text("• $it", color=Muted) }
+   val batteryState=DeviceReadings.battery(context)
+   val thermalAdvice=ChargingThermalPolicy.evaluate(batteryState.temperatureC,batteryState.charging)
+   Text("Battery temperature: " + (batteryState.temperatureC?.let { "%.1f °C".format(it) } ?: "Unavailable"))
+   Text("Charging thermal assessment: " + thermalAdvice.band.name)
+   Text(thermalAdvice.advice,color=Muted)
+
    Action("Refresh charging and display readings") { d = ChargingDiagnostics.assess(context) }
    Action("Open display settings") { open(Settings.ACTION_DISPLAY_SETTINGS) }
    Action("Open battery saver") { open(Settings.ACTION_BATTERY_SAVER_SETTINGS) }
