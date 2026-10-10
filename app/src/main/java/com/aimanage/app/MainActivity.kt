@@ -71,17 +71,6 @@ private fun AimanageUI() {
     IconButton(onClick = { settingsDrawer = !settingsDrawer; drawer = false }) { Icon(Icons.Default.Settings, "Settings",tint=Cyan) }
    }
    Row(Modifier.weight(1f)) {
-    if(settingsDrawer) {
-     LazyColumn(Modifier.width(170.dp).fillMaxHeight().background(Panel).padding(8.dp)) {
-      item { Text("Settings",color=Cyan,fontWeight=FontWeight.Bold) }
-      items(listOf("Settings","Permissions","Device Information","Battery Care","Notification Center","Connected Apps")) { option ->
-       TextButton(onClick={ selected=option; settingsDrawer=false },modifier=Modifier.fillMaxWidth()) {
-        Text(option,color=Color.White,style=MaterialTheme.typography.labelMedium)
-       }
-      }
-     }
-    }
-
     if (drawer) {
      LazyColumn(Modifier.width(174.dp).fillMaxHeight().background(Panel).padding(8.dp)) {
       items(sections) { item ->
@@ -144,6 +133,17 @@ private fun AimanageUI() {
       item { DetailSection(when(selected) { "Apps" -> "App Review"; "AI" -> "AI Assistant"; else -> selected }, pct, thermal) { action -> launch(context, action) } }
      }
     }
+    if(settingsDrawer) {
+     LazyColumn(Modifier.width(170.dp).fillMaxHeight().background(Panel).padding(8.dp)) {
+      item { Text("Settings",color=Cyan,fontWeight=FontWeight.Bold) }
+      items(listOf("Settings","Permissions","Device Information","Battery Care","Notification Center","Connected Apps")) { option ->
+       TextButton(onClick={ selected=option; settingsDrawer=false },modifier=Modifier.fillMaxWidth()) {
+        Text(option,color=Color.White,style=MaterialTheme.typography.labelMedium)
+       }
+      }
+     }
+    }
+
    }
    NavigationBar(containerColor = Panel) {
     tabs.forEach { tab ->
