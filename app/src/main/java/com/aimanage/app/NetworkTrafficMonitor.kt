@@ -39,6 +39,14 @@ object NetworkTrafficMonitor {
         val tx0=previous.sentBytes ?: return null
         val tx1=current.sentBytes ?: return null
         if(elapsed<=0 || rx1<rx0 || tx1<tx0) return null
-        return NetworkTrafficRate((rx1-rx0)*1000/elapsed,(tx1-tx0)*1000/elapsed)
+        if(previous.wifiActive!=current.wifiActive ||
+           previous.cellularActive!=current.cellularActive ||
+           previous.vpnActive!=current.vpnActive) return null
+        val rxDelta=rx1-rx0
+        val txDelta=tx1-tx0
+        return NetworkTrafficRate(
+            (rxDelta.toDouble()*1000.0/elapsed).coerceAtMost(Long.MAX_VALUE.toDouble()).toLong(),
+            (txDelta.toDouble()*1000.0/elapsed).coerceAtMost(Long.MAX_VALUE.toDouble()).toLong()
+        )
     }
 }
