@@ -16,12 +16,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +48,23 @@ private fun AimanageUI() {
  var selected by remember { mutableStateOf("Overview") }
  var drawer by remember { mutableStateOf(false) }
  var settingsDrawer by remember { mutableStateOf(false) }
+ val uiPrefs = remember(context) { context.getSharedPreferences("aimanage_ui_options",Context.MODE_PRIVATE) }
+ var autoHideBottom by remember { mutableStateOf(uiPrefs.getBoolean("auto_hide_bottom_bar",true)) }
+ var bottomVisible by remember { mutableStateOf(true) }
+ val contentScroll = rememberLazyListState()
+ LaunchedEffect(contentScroll,autoHideBottom,selected) {
+  bottomVisible=true
+  var previousIndex=contentScroll.firstVisibleItemIndex
+  var previousOffset=contentScroll.firstVisibleItemScrollOffset
+  snapshotFlow { contentScroll.firstVisibleItemIndex to contentScroll.firstVisibleItemScrollOffset }.collectLatest { (index,offset) ->
+   val moved = (index-previousIndex)*100000L+(offset-previousOffset)
+   if(autoHideBottom && moved > 12L) bottomVisible=false
+   else if(!autoHideBottom || moved < -12L || (index==0 && offset==0)) bottomVisible=true
+   previousIndex=index
+   previousOffset=offset
+  }
+ }
+
  var deviceRefresh by remember { mutableIntStateOf(0) }
  val batteryIntent = remember(deviceRefresh) { context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) }
  val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
@@ -80,7 +99,7 @@ private fun AimanageUI() {
       }
      }
     }
-    LazyColumn(Modifier.weight(1f).fillMaxHeight(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(Modifier.weight(1f).fillMaxHeight(), state=contentScroll, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
      item { Text(selected,color=Color.White,style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) }
      if(selected == "Connected Apps") {
       item { ConnectedAppsPanel(context) }
@@ -136,6 +155,16 @@ private fun AimanageUI() {
     if(settingsDrawer) {
      LazyColumn(Modifier.width(170.dp).fillMaxHeight().background(Panel).padding(8.dp)) {
       item { Text("Settings",color=Cyan,fontWeight=FontWeight.Bold) }
+      item {
+       Row(verticalAlignment=Alignment.CenterVertically) {
+        Text("Auto-hide bottom bar",modifier=Modifier.weight(1f),style=MaterialTheme.typography.labelSmall)
+        Switch(checked=autoHideBottom,onCheckedChange={
+         autoHideBottom=it
+         bottomVisible=true
+         uiPrefs.edit().putBoolean("auto_hide_bottom_bar",it).apply()
+        })
+       }
+      }
       items(listOf("Settings","Permissions","Device Information","Battery Care","Notification Center","Connected Apps")) { option ->
        TextButton(onClick={ selected=option; settingsDrawer=false },modifier=Modifier.fillMaxWidth()) {
         Text(option,color=Color.White,style=MaterialTheme.typography.labelMedium)
@@ -145,7 +174,7 @@ private fun AimanageUI() {
     }
 
    }
-   NavigationBar(containerColor = Panel) {
+   if(bottomVisible || !autoHideBottom) NavigationBar(containerColor = Panel) {
     tabs.forEach { tab ->
      val icon = when(tab) { "Home" -> Icons.Default.Home; "Apps" -> Icons.Default.Apps; "Network" -> Icons.Default.Wifi; "AI" -> Icons.Default.SmartToy; else -> Icons.Default.Shield }
      NavigationBarItem(selected = selected == tab || (tab == "Home" && selected == "Overview") || (tab == "Apps" && selected == "App Review") || (tab == "AI" && selected == "AI Assistant"), onClick = { selected = if(tab == "Apps") "App Review" else tab; drawer = false }, icon = { Icon(icon, tab) }, label = { Text(tab) })
