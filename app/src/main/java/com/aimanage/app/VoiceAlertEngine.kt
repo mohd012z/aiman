@@ -2,6 +2,8 @@ package com.aimanage.app
 
 import android.content.Context
 import android.speech.tts.TextToSpeech
+import android.media.AudioAttributes
+import android.os.Bundle
 import java.util.Locale
 
 /** Opt-in speech for non-sensitive alerts. Never speaks message bodies by default. */
@@ -31,9 +33,15 @@ class VoiceAlertEngine(private val context: Context) : TextToSpeech.OnInitListen
         }
     }
 
-    fun speak(text: String) {
+    fun speak(text: String, channel: AlertChannel = AlertChannel.OTHER) {
         if (!enabled() || !ready || text.isBlank()) return
-        engine?.speak(text.take(280), TextToSpeech.QUEUE_FLUSH, null, "aiman-alert")
+        val gain=AlertVolumeSettings.volume(context,channel)
+        if (gain <= 0f) return
+        engine?.setAudioAttributes(AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        val params=Bundle().apply { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME,gain) }
+        engine?.speak(text.take(280), TextToSpeech.QUEUE_FLUSH, params, "aiman-alert-${channel.name}")
     }
 
     fun announceCategory(category: String, appLabel: String) {
