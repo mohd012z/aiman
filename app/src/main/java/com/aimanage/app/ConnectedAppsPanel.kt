@@ -31,6 +31,27 @@ fun ConnectedAppsPanel(context: Context) {
             })
         }
         Text("Requires Android Notification Access and Aiman voice alerts. Notification text availability depends on Outlook and device privacy settings.")
+        Text("Microsoft account setup",style=MaterialTheme.typography.titleMedium)
+        var clientId by remember { mutableStateOf(MicrosoftConnection.clientId(context)) }
+        var mail by remember { mutableStateOf(true) }
+        var calendar by remember { mutableStateOf(false) }
+        OutlinedTextField(value=clientId,onValueChange={
+            clientId=it
+            MicrosoftConnection.setClientId(context,it)
+        },label={ Text("Application client ID") },singleLine=true,modifier=Modifier.fillMaxWidth())
+        Row(modifier=Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+            Text("Read email permission")
+            Switch(mail,{mail=it})
+        }
+        Row(modifier=Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+            Text("Read calendar permission")
+            Switch(calendar,{calendar=it})
+        }
+        Text("Requested permissions: " + MicrosoftConnection.scopes(mail,calendar).joinToString(", "))
+        OutlinedButton(onClick={ MicrosoftConnection.openRegistrationGuide(context) }) {
+            Text("Microsoft registration instructions")
+        }
+        Text("Not connected: OAuth sign-in, redirect handling, and token exchange are pending.")
         Text("Future Microsoft Graph integration: sign in with OAuth, request Mail.Read and Calendars.Read separately, then summarize only content you approve.")
     }
 }
