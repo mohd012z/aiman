@@ -11,7 +11,8 @@ object ReviewableApps {
  fun load(context:Context):List<ReviewableApp> {
   val intent=Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
   val pm=context.packageManager
-  val activities=pm.queryIntentActivities(intent,PackageManager.MATCH_DEFAULT_ONLY)
+  val activities=runCatching { pm.queryIntentActivities(intent,PackageManager.MATCH_DEFAULT_ONLY) }
+   .getOrElse { return emptyList() }
   return activities.mapNotNull { entry ->
    val pkg=entry.activityInfo?.packageName ?: return@mapNotNull null
    ReviewableApp(entry.loadLabel(pm).toString(),pkg)
