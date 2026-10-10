@@ -81,7 +81,9 @@ private fun AimanageUI() {
     }
     LazyColumn(Modifier.weight(1f).fillMaxHeight(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
      item { Text(selected,color=Color.White,style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) }
-     if(selected == "Overview" || selected == "Home") {
+     if(selected == "Voice Caller" || selected == "Notification Center") {
+      item { VoiceAlertSettingsPanel(context) }
+     } else if(selected == "Overview" || selected == "Home") {
       item { PanelCard("Device Health", "Live battery and thermal snapshot", Icons.Default.Favorite) {
        Text("Battery  ${pct?.let { "$it%" } ?: "Unavailable"}", style = MaterialTheme.typography.headlineMedium)
        Text("Thermal status  $thermal", color = Muted)
