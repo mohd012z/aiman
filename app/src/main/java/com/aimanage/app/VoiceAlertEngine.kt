@@ -1,0 +1,65 @@
+package com.aimanage.app
+
+import android.content.Context
+import android.speech.tts.TextToSpeech
+import android.media.AudioAttributes
+import android.os.Bundle
+import java.util.Locale
+
+/** Opt-in speech for non-sensitive alerts. Never speaks message bodies by default. */
+class VoiceAlertEngine(private val context: Context) : TextToSpeech.OnInitListener {
+    private var engine: TextToSpeech? = null
+    private var ready = false
+    private val preferences = context.getSharedPreferences("voice_alerts", Context.MODE_PRIVATE)
+
+    fun enabled(): Boolean = preferences.getBoolean("enabled", false)
+
+    fun setEnabled(value: Boolean) {
+        preferences.edit().putBoolean("enabled", value).apply()
+        if (!value) engine?.stop()
+    }
+
+    fun initialize() {
+        if (engine == null) engine = TextToSpeech(context.applicationContext, this)
+    }
+
+    override fun onInit(status: Int) {
+        ready = status == TextToSpeech.SUCCESS
+        if (ready) {
+            val tag = preferences.getString("language", "en") ?: "en"
+            val locale = if (tag == "ms") Locale.forLanguageTag("ms-MY") else Locale.ENGLISH
+            ready = engine?.setLanguage(locale) != TextToSpeech.LANG_MISSING_DATA &&
+                engine?.isLanguageAvailable(locale) != TextToSpeech.LANG_NOT_SUPPORTED
+        }
+    }
+
+    fun speak(text: String, channel: AlertChannel = AlertChannel.OTHER) {
+        if (!enabled() || !ready || text.isBlank()) return
+        val gain=AlertVolumeSettings.volume(context,channel)
+        if (gain <= 0f) return
+        engine?.setAudioAttributes(AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        val params=Bundle().apply { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME,gain) }
+        engine?.speak(text.take(280), TextToSpeech.QUEUE_FLUSH, params, "aiman-alert-${channel.name}")
+    }
+
+    fun announceCategory(category: String, appLabel: String) {
+        if (!enabled() || !ready) return
+        val allowed = setOf("device", "call", "message")
+        if (category !in allowed) return
+        val message = when (category) {
+            "device" -> "Aiman device health alert."
+            "call" -> "Incoming call."
+            else -> "New notification from ${appLabel.take(48)}."
+        }
+        engine?.speak(message, TextToSpeech.QUEUE_FLUSH, null, "aiman-${category}")
+    }
+
+    fun shutdown() {
+        engine?.stop()
+        engine?.shutdown()
+        engine = null
+        ready = false
+    }
+}
