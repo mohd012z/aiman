@@ -411,6 +411,15 @@ private fun AimanageUI() {
    var unwantedAlerts by remember { mutableStateOf(false) }
    var batteryEvidence by remember { mutableStateOf(false) }
    var essential by remember { mutableStateOf(false) }
+   var savedReview by remember { mutableStateOf("") }
+   LaunchedEffect(packageName) {
+    val flags=AppReviewNotes.load(context,packageName)
+    essential=flags.essential
+    unwantedAlerts=flags.unwantedNotifications
+    batteryEvidence=flags.unusualBatteryUse
+    unneeded=flags.noLongerNeeded
+    savedReview=""
+   }
    val valid=AppPackageIdPolicy.valid(packageName)
    Text("App review assistant",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold)
    Text("Enter an exact package ID from Android App Info. AImanage cannot identify live background services or measure another app's CPU load; it does not close apps automatically.",color=Muted)
@@ -432,6 +441,19 @@ private fun AimanageUI() {
     Text("I no longer need this app",modifier=Modifier.weight(1f))
    }
    if(valid) {
+    Action("Save review for this app") {
+     val ok=AppReviewNotes.save(context,packageName,AppReviewFlags(
+      essential,unwantedAlerts,batteryEvidence,unneeded))
+     savedReview=if(ok) "Review saved on this device." else "Could not save review."
+    }
+    Action("Clear saved review") {
+     val ok=AppReviewNotes.clear(context,packageName)
+     if(ok) {
+      essential=false;unwantedAlerts=false;batteryEvidence=false;unneeded=false
+     }
+     savedReview=if(ok) "Saved review cleared." else "Could not clear review."
+    }
+    if(savedReview.isNotBlank()) Text(savedReview,color=Muted)
     var usageReading by remember(packageName) { mutableStateOf<AppUsageReading?>(null) }
     Action("Check last 24 hours of app usage") {
      usageReading=AppUsageDiagnostics.read(context,packageName.trim())
