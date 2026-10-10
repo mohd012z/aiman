@@ -45,6 +45,7 @@ private fun AimanageUI() {
  val context = LocalContext.current
  var selected by remember { mutableStateOf("Overview") }
  var drawer by remember { mutableStateOf(false) }
+ var settingsDrawer by remember { mutableStateOf(false) }
  var deviceRefresh by remember { mutableIntStateOf(0) }
  val batteryIntent = remember(deviceRefresh) { context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) }
  val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
@@ -64,12 +65,23 @@ private fun AimanageUI() {
  MaterialTheme(colorScheme = darkColorScheme(primary = Cyan, onPrimary = Navy, background = Navy, onBackground = Color.White, surface = Panel, onSurface = Color.White, surfaceVariant = Panel, onSurfaceVariant = Muted, outline = Muted)) {
   Column(Modifier.fillMaxSize().background(Navy).statusBarsPadding()) {
    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-    IconButton(onClick = { drawer = !drawer }) { Icon(Icons.Default.Menu, "Toggle categories",tint=Color.White) }
+    IconButton(onClick = { drawer = !drawer; settingsDrawer = false }) { Icon(Icons.Default.Menu, "Toggle categories",tint=Color.White) }
     Column(Modifier.weight(1f)) { Text("AImanage",color=Color.White,style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text("Android Device Intelligence", color = Muted, style = MaterialTheme.typography.labelSmall) }
     IconButton(onClick = { selected = "AI Assistant"; drawer = false }) { Icon(Icons.Default.Chat, "Open AI Advisor") }
-    IconButton(onClick = { selected = "Settings" }) { Icon(Icons.Default.Settings, "Settings",tint=Cyan) }
+    IconButton(onClick = { settingsDrawer = !settingsDrawer; drawer = false }) { Icon(Icons.Default.Settings, "Settings",tint=Cyan) }
    }
    Row(Modifier.weight(1f)) {
+    if(settingsDrawer) {
+     LazyColumn(Modifier.width(170.dp).fillMaxHeight().background(Panel).padding(8.dp)) {
+      item { Text("Settings",color=Cyan,fontWeight=FontWeight.Bold) }
+      items(listOf("Settings","Permissions","Device Information","Battery Care","Notification Center","Connected Apps")) { option ->
+       TextButton(onClick={ selected=option; settingsDrawer=false },modifier=Modifier.fillMaxWidth()) {
+        Text(option,color=Color.White,style=MaterialTheme.typography.labelMedium)
+       }
+      }
+     }
+    }
+
     if (drawer) {
      LazyColumn(Modifier.width(174.dp).fillMaxHeight().background(Panel).padding(8.dp)) {
       items(sections) { item ->
