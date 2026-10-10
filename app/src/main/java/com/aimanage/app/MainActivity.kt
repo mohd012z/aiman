@@ -627,6 +627,28 @@ private fun AimanageUI() {
    Action("Review system VPN settings") { open(Settings.ACTION_VPN_SETTINGS) }
    Text("For DNS-only filtering, configure Android Private DNS independently. VPN/DNS changes may affect battery, latency and app connectivity.",color=Muted)
   }
+  if(section == "Firewall") {
+   Text("Firewall readiness",color=Cyan,fontWeight=FontWeight.Bold)
+   Text("A local Android firewall requires VpnService, a user-approved VPN session, and a packet-filtering engine. AImanage does not yet intercept or block traffic.",color=Muted)
+   Text("Only one active VPN service is generally supported at a time. A firewall VPN can conflict with another VPN app.",color=Muted)
+   Action("Review Android VPN permissions") { open(Settings.ACTION_VPN_SETTINGS) }
+   Action("Review app network settings") { open(Settings.ACTION_WIRELESS_SETTINGS) }
+  }
+  if(section == "Network & Speed" || section == "Network") {
+   val ctx=LocalContext.current
+   var first by remember { mutableStateOf(NetworkTrafficMonitor.capture(ctx)) }
+   var latest by remember { mutableStateOf(first) }
+   val rate=NetworkTrafficMonitor.rate(first,latest)
+   Text("Active connection: " + listOfNotNull(
+    "Wi-Fi".takeIf { latest.wifiActive },
+    "Cellular".takeIf { latest.cellularActive },
+    "VPN".takeIf { latest.vpnActive }
+   ).ifEmpty { listOf("Other / unavailable") }.joinToString(" + "))
+   Text("Aiman app traffic only — download: " + (rate?.downBytesPerSecond?.toString() ?: "Sample again") + " B/s")
+   Text("Aiman app traffic only — upload: " + (rate?.upBytesPerSecond?.toString() ?: "Sample again") + " B/s")
+   Action("Sample app network traffic") { first=latest; latest=NetworkTrafficMonitor.capture(ctx) }
+   Text("These readings are NOT an internet speed test. No app can guarantee higher carrier or Wi-Fi bandwidth through a booster switch.",color=Muted)
+  }
   if(section == "Display & Refresh Rate") {
    val context = LocalContext.current
    Text("Current display rate: ${DeviceReadings.refreshRate(context)?.let { "$it Hz" } ?: "Unavailable"}")
